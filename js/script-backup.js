@@ -20,8 +20,8 @@ async function fetchAPIData (endpoint) {
 
     hideSpinner();
 
-    console.log(data);
-    return data
+    console.log(data)
+    return data;
 }
 
 
@@ -52,7 +52,7 @@ async function displayPopularMovies() {
             <p class="card-text"><small class="text-muted">Release: ${movie.release_date}</small></p>
         </div>
         `
-    document.querySelector('#popular-movies').appendChild(div)
+    document.querySelector('#popular-movies').appendChild(div);
     })
 }
 
@@ -81,7 +81,7 @@ async function displayPopularTVShows() {
             <p class="card-text"><small class="text-muted">Air Date: ${show.first_air_date}</small></p>
         </div>
         `
-    document.querySelector('#popular-shows').appendChild(div)
+    document.querySelector('#popular-shows').appendChild(div);
     })
 }
 
@@ -95,48 +95,71 @@ async function displayMovieDetails() {
     
     const movie = await fetchAPIData(`/movie/${movieID}`); // de-structure '{Object}' converts it to an array.
 
-    // Overlay for backgroud Image
-    displayBackgroundImage('movie', movie.backdrop_path);
-    
-    const div = document.createElement('div');
-    const baseURLforPostersAndImages = `https://image.tmdb.org/t/p`
-    const widthOfThePoster = `/w500`
+    const contentType = 'movie';
 
-    div.innerHTML = 
-    `
-    <div class="details-top">
-        <div>
-            ${movie.poster_path 
-                ? `<img src="${baseURLforPostersAndImages}${widthOfThePoster}${movie.poster_path}" class="card-img-top" alt="${movie.title}"/>` 
-                : `<img src="../images/no-image.jpg" class="card-img-top" alt="${movie.title}"/>`}
+    // Overlay for backgroud Image
+    displayBackgroundImage(contentType, movie.backdrop_path);
+    
+    let div = null;
+
+    if (contentType === 'movie') {
+
+        div = document.createElement('div');
+    
+        const baseURLforPostersAndImages = `https://image.tmdb.org/t/p`
+        const widthOfThePoster = `/w500`
+    
+        div.innerHTML = 
+        `
+        <div class="details-top">
+            <div>
+                ${movie.poster_path 
+                    ? `<img src="${baseURLforPostersAndImages}${widthOfThePoster}${movie.poster_path}" class="card-img-top" alt="${movie.title}"/>` 
+                    : `<img src="../images/no-image.jpg" class="card-img-top" alt="${movie.title}"/>`}
+            </div>
+            <div>
+                <h2>${movie.title}</h2>
+                <p><i class="fas fa-star text-primary">${movie.vote_average.toFixed(1)}</i>/ 10</p>
+                <p class="text-muted">Release Date: ${movie.release_date}</p>
+                <p>${movie.overview}</p>
+                <h5>Genres</h5>
+                <ul class="list-group">
+                    ${movie.genres.map((genre) => { return `<li>${genre.name}</li>`}).join('')}
+                </ul>
+                <a href="${movie.homepage}" target="_blank" class="btn">Visit Movie Homepage</a>
+            </div>
         </div>
-        <div>
-            <h2>${movie.title}</h2>
-            <p><i class="fas fa-star text-primary">${movie.vote_average.toFixed(1)}</i>/ 10</p>
-            <p class="text-muted">Release Date: ${movie.release_date}</p>
-            <p>${movie.overview}</p>
-            <h5>Genres</h5>
-            <ul class="list-group">
-                ${movie.genres.map((genre) => { return `<li>${genre.name}</li>`}).join('')}
+        <div class="details-bottom">
+            <h2>Movie Info</h2>
+            <ul>
+                <li><span class="text-secondary">Budget:</span> $${addComasToNumber(movie.budget)}</li>
+                <li><span class="text-secondary">Revenue:</span> $${addComasToNumber(movie.revenue)}</li>
+                <li><span class="text-secondary">Runtime:</span> ${movie.runtime} minutes</li>
+                <li><span class="text-secondary">Status:</span> ${movie.status}</li>
             </ul>
-            <a href="${movie.homepage}" target="_blank" class="btn">Visit Movie Homepage</a>
+            <h4>Production Companies</h4>
+            <div class="list-group">
+                ${movie.production_companies.map((company) => {return `<span>${company.name}<\span>`}).join(', ')}
+            </div>
         </div>
-    </div>
-    <div class="details-bottom">
-        <h2>Movie Info</h2>
-        <ul>
-            <li><span class="text-secondary">Budget:</span> $${addComasToNumber(movie.budget)}</li>
-            <li><span class="text-secondary">Revenue:</span> $${addComasToNumber(movie.revenue)}</li>
-            <li><span class="text-secondary">Runtime:</span> ${movie.runtime} minutes</li>
-            <li><span class="text-secondary">Status:</span> ${movie.status}</li>
-        </ul>
-        <h4>Production Companies</h4>
-        <div class="list-group">
-            ${movie.production_companies.map((company) => {return `<span>${company.name}<\span>`}).join(', ')}
-        </div>
-    </div>
-    `
-    document.querySelector('#movie-details').appendChild(div)
+        `
+       document.querySelector('#movie-details').appendChild(div);
+
+    } else {
+        div = document.createElement('div');
+        div.classList.add('background-image-container');
+
+        const h1 = document.createElement('h1');
+        h1.innerText = `Background image only available for "Movies" and "TV Shows"`;
+
+        div.append(h1);      
+        h1.setAttribute("id", "background-image-not-available")
+
+        h1.style.color = 'red';
+        h1.style.textAlign = "center"
+
+        document.querySelector('#movie-details').append(div);
+    }
 }
 
 
@@ -149,48 +172,71 @@ async function displayTVDetails() {
     
     const show = await fetchAPIData(`/tv/${showID}`); // de-structure '{Object}' converts it to an array.
 
+    const contentType = 'tv';
+
     // Overlay for backgroud Image
-    displayBackgroundImage('tv', show.backdrop_path);
+    displayBackgroundImage(contentType, show.backdrop_path);
     
-    const div = document.createElement('div');
-    const baseURLforPostersAndImages = `https://image.tmdb.org/t/p`
-    const widthOfThePoster = `/w500`
-    
-    div.innerHTML = 
-    `
-        <div class="details-top">
-        <div>
-            ${show.poster_path 
-                ? `<img src="${baseURLforPostersAndImages}${widthOfThePoster}${show.poster_path}" class="card-img-top" alt="${show.name}"/>` 
-                : `<img src="../images/no-image.jpg" class="card-img-top" alt="${show.name}"/>`}
+    let div = null;
+
+     if (contentType === 'tv') {
+
+        div = document.createElement('div');
+        
+        const baseURLforPostersAndImages = `https://image.tmdb.org/t/p`
+        const widthOfThePoster = `/w500`
+        
+        div.innerHTML = 
+        `
+         <div class="details-top">
+            <div>
+                ${show.poster_path 
+                    ? `<img src="${baseURLforPostersAndImages}${widthOfThePoster}${show.poster_path}" class="card-img-top" alt="${show.name}"/>` 
+                    : `<img src="../images/no-image.jpg" class="card-img-top" alt="${show.name}"/>`}
+            </div>
+            <div>
+                <h2>${show.name}</h2>
+                <p><i class="fas fa-star text-primary">${show.vote_average.toFixed(1)}</i>/ 10</p>
+                <p class="text-muted">Last Air Date: ${show.last_air_date}</p>
+                <p>${show.overview}</p>
+                <h5>Genres</h5>
+                <ul class="list-group">
+                    ${show.genres.map((genre) => { return `<li>${genre.name}</li>`}).join('')}
+                </ul>
+                <a href="${show.homepage}" target="_blank" class="btn">Visit TV Show Homepage</a>
+           </div>
         </div>
-        <div>
-            <h2>${show.name}</h2>
-            <p><i class="fas fa-star text-primary">${show.vote_average.toFixed(1)}</i>/ 10</p>
-            <p class="text-muted">Last Air Date: ${show.last_air_date}</p>
-            <p>${show.overview}</p>
-            <h5>Genres</h5>
-            <ul class="list-group">
-                ${show.genres.map((genre) => { return `<li>${genre.name}</li>`}).join('')}
+        <div class="details-bottom">
+            <h2>TV Show Info</h2>
+            <ul>
+                <li><span class="text-secondary">Number of Episodes:</span> ${show.number_of_episodes}</li>
+                <li><span class="text-secondary">Number of Seasons:</span> ${show.number_of_seasons}</li>
+                <li><span class="text-secondary">Last Episode to Air:</span> ${show.last_episode_to_air.name}</li>
+                <li><span class="text-secondary">Status:</span> ${show.status}</li>
             </ul>
-            <a href="${show.homepage}" target="_blank" class="btn">Visit TV Show Homepage</a>
+            <h4>Production Companies</h4>
+            <div class="list-group">
+                ${show.production_companies.map((company) => {return `<span>${company.name}<\span>`}).join(', ')}
+            </div>
         </div>
-    </div>
-    <div class="details-bottom">
-        <h2>TV Show Info</h2>
-        <ul>
-            <li><span class="text-secondary">Number of Episodes:</span> ${show.number_of_episodes}</li>
-            <li><span class="text-secondary">Number of Seasons:</span> ${show.number_of_seasons}</li>
-            <li><span class="text-secondary">Last Episode to Air:</span> ${show.last_episode_to_air.name}</li>
-            <li><span class="text-secondary">Status:</span> ${show.status}</li>
-        </ul>
-        <h4>Production Companies</h4>
-        <div class="list-group">
-            ${show.production_companies.map((company) => {return `<span>${company.name}<\span>`}).join(', ')}
-        </div>
-    </div>
-    `
-    document.querySelector('#show-details').appendChild(div);
+        `
+       document.querySelector('#show-details').appendChild(div);
+    
+    } else {
+        div = document.createElement('div');
+        div.classList.add('background-image-container');
+
+        const h1 = document.createElement('h1');
+        h1.innerText = `Background image only available for "Movies" and "TV Shows"`;
+
+        div.append(h1);      
+        h1.setAttribute("id", "background-image-not-available")
+
+        h1.style.color = 'red';
+        h1.style.textAlign = "center"
+
+        document.querySelector('#show-details').append(div);
+    }
 }
 
 
@@ -228,6 +274,7 @@ function highLightActiveLink() {
             link.classList.add('active')
         }
     })
+
 }
 
 // ----------------------------------------------------------------------------------------
@@ -237,6 +284,7 @@ function addComasToNumber (number) {
 
     console.log(Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD', minimumFractionDigits: 2}).format(number)) // Alternative way #1
     console.log(number.toLocaleString('en-US', { style: 'currency', currency: 'USD', minimumFractionDigits: 2})) // Alternative way #2
+
 
     const comasAddedToNumber = number.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ',');
     return comasAddedToNumber
@@ -266,7 +314,9 @@ function displayBackgroundImage(type, backgroundPath) {
    
     console.log(`${overlayDiv.style.backgroundImage}`)
     
-    switch (type) {
+
+
+     switch (type) {
         case 'movie': {
             document.querySelector('#movie-details').appendChild(overlayDiv);
             break;
@@ -275,7 +325,16 @@ function displayBackgroundImage(type, backgroundPath) {
             document.querySelector('#show-details').appendChild(overlayDiv);
             break;
         } 
-    }   
+     }   
+
+    //  if (type === 'movie') {
+    //     document.querySelector('#movie-details').appendChild(overlayDiv);
+
+    //  } else {
+    //     document.querySelector('#show-details').appendChild(overlayDiv);
+    //  }
+
+
 }
 
 
@@ -289,6 +348,7 @@ function displayBackgroundImage(type, backgroundPath) {
 // Initialization 
 // ----------------------------------------------------------------------------------------
 function init () {
+    
     switch (global.currentPage) {
         case `/`:
         case `/index.html`:
@@ -311,6 +371,7 @@ function init () {
             console.log('Search');
             break;
     }
+
     highLightActiveLink();
 }
 
