@@ -193,6 +193,43 @@ async function displayTVDetails() {
 
 
 // ----------------------------------------------------------------------------------------
+// Display Slider Movies
+// ----------------------------------------------------------------------------------------
+async function displaySlider () {
+    const { results } = await fetchAPIData ('/movie/now_playing')
+
+    console.log(results);
+
+    results.forEach ((movie) => {
+        const div = document.createElement('div');
+        
+        const baseURLforPostersAndImages = `https://image.tmdb.org/t/p`
+        const widthOfThePoster = `/w500`
+
+        div.classList.add('swiper-slide');
+
+        div.innerHTML = 
+        `
+        <div class="swiper-slide">
+            <a href="movie-details.html?id=${movie.id}">
+                <img src="${baseURLforPostersAndImages}${widthOfThePoster}${movie.poster_path}" alt="${movie.title}" />
+            </a>
+            <h4 class="swiper-rating">
+            <i class="fas fa-star text-secondary"></i> ${movie.vote_average.toFixed(1)} / 10
+            </h4>
+        </div>
+        `
+        document.querySelector('.swiper-wrapper').appendChild(div);
+
+        // Init swiper
+        initSwiper();
+
+
+    })
+}
+
+
+// ----------------------------------------------------------------------------------------
 // >>>>> STYLING FUNCTIONS
 // ----------------------------------------------------------------------------------------
 // 'Show' Spinner when waiting from the results from the Endpoint
@@ -275,13 +312,14 @@ function displayBackgroundImage(type, backgroundPath) {
 // ----------------------------------------------------------------------------------------
 // >>>>> INIT
 // ----------------------------------------------------------------------------------------
-// Initialization 
+// Page Initialization 
 // ----------------------------------------------------------------------------------------
 function init () {
     switch (global.currentPage) {
         case `/`:
         case `/index.html`:
             console.log('Home');
+            displaySlider();
             displayPopularMovies();
             break;
         case `/shows.html` :
@@ -301,6 +339,33 @@ function init () {
             break;
     }
     highLightActiveLink();
+}
+
+// ----------------------------------------------------------------------------------------
+// Swiper Initialization 
+// ----------------------------------------------------------------------------------------
+function initSwiper () {
+    const swiper = new Swiper('.swiper', {
+        slidesPerView: 1, 
+        spaceBetween: 12, 
+        freeMode: true, 
+        loop: true, 
+        autoplay: {
+            delay: 4000,
+            disableOnInteraction: false
+        },
+        breakpoints: {
+            500: {
+                slidesPerView: 2
+            },
+            700: {
+                slidesPerView: 3
+            },
+            1200: {
+                slidesPerView: 4
+            },
+        }
+    })
 }
 
 
