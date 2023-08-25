@@ -126,6 +126,15 @@ ul {
   padding: 5px;
 }
 
+/* Card Details --------------------------------------------------- Custom */ 
+.card-details {
+  border-color: white;
+  border-width: 1px;
+  border-style: none;
+  height: auto;
+  width: auto;
+}
+
 .card img {
   width: 100%;
 }

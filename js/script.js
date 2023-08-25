@@ -2,20 +2,57 @@
 // >>>>> GLOBALS
 // ----------------------------------------------------------------------------------------
 const global = {
-    currentPage: window.location.pathname
-}
+    currentPage: window.location.pathname,
+    search: {
+        term: '',
+        type: '',
+        page: 1,
+        totalPages: 1
+    },
+    api: {
+        apiKey: '1b2278a2450196115b4b7190d5dcc01e',
+        apiURL: 'https://api.themoviedb.org/3',
+        
+        URLforPostersAndImages: 'https://image.tmdb.org/t/p',
+        widthOfThePoster: `/w500`
+    }
+};
 
 
 // ----------------------------------------------------------------------------------------
 // >>>>> FETCH DATA FROM SPECIFIC ENDPOINT (TMDB API)
 // ----------------------------------------------------------------------------------------
+// Fetch API
+// ----------------------------------------------------------------------------------------
 async function fetchAPIData (endpoint) {
-    const API_KEY = '1b2278a2450196115b4b7190d5dcc01e';
-    const API_URL = 'https://api.themoviedb.org/3';
+    const API_KEY = global.api.apiKey;
+    const API_URL = global.api.apiURL;
 
     showSpinner();
 
     const response = await fetch (`${API_URL}${endpoint}?api_key=${API_KEY}&language=en-US`) 
+    const data = await response.json();
+
+    hideSpinner();
+
+    console.log(data);
+    return data
+}
+
+// ----------------------------------------------------------------------------------------
+// Make Request to Search
+// ----------------------------------------------------------------------------------------
+async function searchAPIData () {
+    const API_KEY = global.api.apiKey;
+    const API_URL = global.api.apiURL;
+
+    showSpinner();
+
+    const response = await fetch (`${API_URL}/search/${global.search.type}?api_key=${API_KEY}&language=en-US&query=${global.search.term}`);
+
+    console.log(`${API_URL}/search/${global.search.type}?api_key=${API_KEY}&language=en-US&query=${global.search.term}`);
+    console.log(response);
+
     const data = await response.json();
 
     hideSpinner();
@@ -37,14 +74,14 @@ async function displayPopularMovies() {
         const div = document.createElement('div');
         div.classList.add('card');
 
-        const baseURLforPostersAndImages = `https:image.tmdb.org/t/p`
-        const widthOfThePOster = `/w500`
+        const baseURLforPostersAndImages = global.api.URLforPostersAndImages;
+        const widthOfThePoster = global.api.widthOfThePoster;
 
         div.innerHTML = 
         `
         <a href="movie-details.html?id=${movie.id}">
             ${movie.poster_path 
-                ? `<img src="${baseURLforPostersAndImages}${widthOfThePOster}${movie.poster_path}" class="card-img-top" alt="${movie.title}"/>` 
+                ? `<img src="${baseURLforPostersAndImages}${widthOfThePoster}${movie.poster_path}" class="card-img-top" alt="${movie.title}"/>` 
                 : `<img src="../images/no-image.jpg" class="card-img-top" alt="${movie.title}"/>`}
         </a>
         <div class="card-body">
@@ -66,14 +103,14 @@ async function displayPopularTVShows() {
         const div = document.createElement('div');
         div.classList.add('card');
 
-        const baseURLforPostersAndImages = `https:image.tmdb.org/t/p`
-        const widthOfThePOster = `/w500`
+        const baseURLforPostersAndImages = global.api.URLforPostersAndImages;
+        const widthOfThePoster = global.api.widthOfThePoster;
 
         div.innerHTML = 
         `
         <a href="tv-details.html?id=${show.id}">
             ${show.poster_path 
-                ? `<img src="${baseURLforPostersAndImages}${widthOfThePOster}${show.poster_path}" class="card-img-top" alt="${show.name}"/>` 
+                ? `<img src="${baseURLforPostersAndImages}${widthOfThePoster}${show.poster_path}" class="card-img-top" alt="${show.name}"/>` 
                 : `<img src="../images/no-image.jpg" class="card-img-top" alt="${show.name}"/>`}
         </.name
         <div class="card-body">
@@ -98,13 +135,13 @@ async function displayMovieDetails() {
     displayBackgroundImage('movie', movie.backdrop_path);
     
     const div = document.createElement('div');
-    const baseURLforPostersAndImages = `https://image.tmdb.org/t/p`
-    const widthOfThePoster = `/w500`
+    const baseURLforPostersAndImages = global.api.URLforPostersAndImages;
+    const widthOfThePoster = global.api.widthOfThePoster;
 
     div.innerHTML = 
     `
     <div class="details-top">
-        <div>
+        <div class="card-details">
             ${movie.poster_path 
                 ? `<img src="${baseURLforPostersAndImages}${widthOfThePoster}${movie.poster_path}" class="card-img-top" alt="${movie.title}"/>` 
                 : `<img src="../images/no-image.jpg" class="card-img-top" alt="${movie.title}"/>`}
@@ -151,8 +188,8 @@ async function displayTVDetails() {
     displayBackgroundImage('tv', show.backdrop_path);
     
     const div = document.createElement('div');
-    const baseURLforPostersAndImages = `https://image.tmdb.org/t/p`
-    const widthOfThePoster = `/w500`
+    const baseURLforPostersAndImages = global.api.URLforPostersAndImages;
+    const widthOfThePoster = global.api.widthOfThePoster;
     
     div.innerHTML = 
     `
@@ -191,7 +228,6 @@ async function displayTVDetails() {
     document.querySelector('#show-details').appendChild(div);
 }
 
-
 // ----------------------------------------------------------------------------------------
 // Display Slider Movies
 // ----------------------------------------------------------------------------------------
@@ -228,6 +264,25 @@ async function displaySlider () {
     })
 }
 
+async function search() {
+    const queryString  = window.location.search;
+    console.log(queryString);
+
+    const urlParams = new URLSearchParams(queryString);
+
+    global.search.type = urlParams.get('type'),
+    global.search.term = urlParams.get('search-term')
+    console.log(global.search.type, ``, global.search.term)
+
+    if (global.search.term !== '' && global.search.term !== 'a') {
+        const results = await searchAPIData();
+        console.log(results);
+        
+    } else {
+        showAlert('Please enter a search term');
+    }
+
+}
 
 // ----------------------------------------------------------------------------------------
 // >>>>> STYLING FUNCTIONS
@@ -275,11 +330,11 @@ function addComasToNumber (number) {
 // ----------------------------------------------------------------------------------------
 // Display Backdrop On Details Pages (Movies and TVshows)
 // ----------------------------------------------------------------------------------------
-function displayBackgroundImage(type, backgroundPath) {
+function displayBackgroundImage (type, backgroundPath) {
 
     const overlayDiv = document.createElement('div');
 
-    const baseURLforPostersAndImages = `https://image.tmdb.org/t/p`
+    const baseURLforPostersAndImages = global.api.URLforPostersAndImages;
 
     // Styles
     overlayDiv.style.backgroundImage = `url(${baseURLforPostersAndImages}/original${backgroundPath})`;
@@ -309,6 +364,20 @@ function displayBackgroundImage(type, backgroundPath) {
 }
 
 
+function showAlert (message, className) {
+    const alertElement = document.createElement('div');
+    alertElement.classList.add('alert', className);
+    
+    alertElement.appendChild(document.createTextNode(message))
+
+    document.querySelector('#alert').appendChild(alertElement);
+
+    setTimeout (() => {
+        alertElement.remove();
+    }, 3000)
+
+}
+
 // ----------------------------------------------------------------------------------------
 // >>>>> INIT
 // ----------------------------------------------------------------------------------------
@@ -336,6 +405,7 @@ function init () {
             break;
         case `/search.html` :
             console.log('Search');
+            search();
             break;
     }
     highLightActiveLink();
