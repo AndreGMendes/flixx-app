@@ -1,14 +1,13 @@
-// --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+// ----------------------------------------------------------------------------------------
 // >>>>> GLOBALS
-// --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+// ----------------------------------------------------------------------------------------
 const global = {
     currentPage: window.location.pathname,
     search: {
         term: '',
         type: '',
         page: 1,
-        totalPages: 1,
-        totalResults: 0
+        totalPages: 1
     },
     api: {
         apiKey: '1b2278a2450196115b4b7190d5dcc01e',
@@ -20,9 +19,9 @@ const global = {
 };
 
 
-// --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+// ----------------------------------------------------------------------------------------
 // >>>>> FETCH DATA FROM SPECIFIC ENDPOINT (TMDB API)
-// --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+// ----------------------------------------------------------------------------------------
 // Fetch API
 // ----------------------------------------------------------------------------------------
 async function fetchAPIData (endpoint) {
@@ -32,7 +31,7 @@ async function fetchAPIData (endpoint) {
     showSpinner();
 
     const response = await fetch (`${API_URL}${endpoint}?api_key=${API_KEY}&language=en-US`) 
-    const data = await response.json();
+    const data = /*await*/ response.json();
 
     hideSpinner();
 
@@ -49,9 +48,9 @@ async function searchAPIData () {
 
     showSpinner();
 
-    const endpoint = `${API_URL}/search/${global.search.type}?api_key=${API_KEY}&language=en-US&query=${global.search.term}&page=${global.search.page}`
+    const endpoint = `${API_URL}/search/${global.search.type}?api_key=${API_KEY}&language=en-US&query=${global.search.term}`
     const response = await fetch (endpoint);
-    const data = await response.json();
+    const data = /*await*/ response.json();
 
     console.log('ENDPOINT: ' + endpoint);
     console.log('RESPONSE: ' + response);
@@ -63,9 +62,9 @@ async function searchAPIData () {
 }
 
 
-// --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+// ----------------------------------------------------------------------------------------
 // >>>>> DISPLAY AFTER FETCHING ALL THE DATA FROM A SPECIFIC ENDPOINT
-// --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+// ----------------------------------------------------------------------------------------
 // 20 most Popular Tv Shows
 // ----------------------------------------------------------------------------------------
 async function displayPopularMovies() {
@@ -265,11 +264,6 @@ async function displaySlider () {
     })
 }
 
-// ----------------------------------------------------------------------------------------
-// Search Movies of TV Shows: Fetches the Resultas from the API and after displays those results in the Browser
-// -> searchAPIData()
-// -> displaySearchResults(results);
-// ----------------------------------------------------------------------------------------
 async function search() {
     const queryString  = window.location.search;
     console.log(queryString);
@@ -278,22 +272,30 @@ async function search() {
 
     global.search.type = urlParams.get('type'),
     global.search.term = urlParams.get('search-term')
+    console.log(global.search.type, ``, global.search.term)
 
     if (global.search.term !== '' && global.search.term !== 'a') {
+        const resultsObject = await searchAPIData();                        // Gets all results in the form of OBJECT.
+        console.log('TYPE OF \'resultsObject\' variable: ' + typeof(resultsObject));
         
-        const { results, total_pages, page, total_results } = await searchAPIData();      
-
-        global.search.page = page;
-        global.search.totalPages = total_pages;
-        global.search.totalResults = total_results;
+        const { results, total_pages, page } = await searchAPIData();       // De-structures the Object. The name(s) inside {} are the Object(s) attributes. 
+                                                                            // In this case 'results' is an array. This is used to select only the needed portions of an Object.
+        console.log('RESULTS OBJECT (All info):',  resultsObject )
+        console.log('RESULTS DESTRUCTURED (\'Results\' only):',  results )
+        
+        // Demo example for getting specific data from an Object and adding it to an array (Not needed in this Application. For reference only)
+            let matches = [];
+            Object.entries(resultsObject).map((entry) => {
+            matches.push(entry)
+            return console.log(entry)
+        })
+        console.log('MATCHES:', matches[1][1])
 
         if (results.length === 0) {
             showAlert('No results found');
             return;
         }
       
-        showAlert(`${global.search.totalResults} results found`);
-
         displaySearchResults(results);
         document.querySelector('#search-term').value = '';
 
@@ -302,16 +304,7 @@ async function search() {
     }
 }
 
-// ----------------------------------------------------------------------------------------
-// Search Movies of TV Shows
-// ----------------------------------------------------------------------------------------
 function displaySearchResults (results) {
-
-    // Clear Previous Results
-    document.querySelector('#search-results').innerHTML = '';
-    document.querySelector('#search-results-heading').innerHTML = '';
-    document.querySelector('#pagination').innerHTML = '';
-
 
     results.forEach((result) => {
         const div = document.createElement('div');
@@ -335,25 +328,14 @@ function displaySearchResults (results) {
             <p class="card-text"><small class="text-muted">Release: ${dateOfRelease}</small></p>
         </div>
         `
-
-        document.querySelector('#search-results-heading').innerHTML = 
-        `
-        <h2>${results.length} of ${global.search.totalResults} results for:  
-        <i style = "color : red">
-            <small> 
-            '${global.search.term}'
-            </small>
-        </i>
-        <h2/>
-        `
-        document.querySelector('#search-results').appendChild(div);
-    });
-    displayPagination ();
+    document.querySelector('#search-results').appendChild(div)
+    })
 }
 
-// --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+
+// ----------------------------------------------------------------------------------------
 // >>>>> STYLING FUNCTIONS
-// --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+// ----------------------------------------------------------------------------------------
 // 'Show' Spinner when waiting from the results from the Endpoint
 // ----------------------------------------------------------------------------------------
 function showSpinner () {
@@ -430,13 +412,8 @@ function displayBackgroundImage (type, backgroundPath) {
     }   
 }
 
-// ----------------------------------------------------------------------------------------
-// Show Search Alert Message
-// ----------------------------------------------------------------------------------------
+
 function showAlert (message, className = 'error') {
-    
-    global.search.totalResults > 0 ? className = 'success' : 'error';
-    
     const alertElement = document.createElement('div');
     alertElement.classList.add('alert', className);
     
@@ -451,50 +428,8 @@ function showAlert (message, className = 'error') {
 }
 
 // ----------------------------------------------------------------------------------------
-// Create & Display Pagination for 'Search'
-// ----------------------------------------------------------------------------------------
-function displayPagination() {
-    const div = document.createElement('div');
-    div.classList.add('pagination');
-    div.innerHTML = 
-    `
-    <button class="btn btn-primary" id="prev">Prev</button>
-    <button class="btn btn-primary" id="next">Next</button>
-    <div class="page-counter">Page ${global.search.page} of ${global.search.totalPages}</div>
-    `
-
-    document.querySelector('#pagination').appendChild(div);
-
-    // Disable 'prev button' if on first page
-    if (global.search.page === 1) {
-        // document.querySelector('.btn#prev').style.display = 'none'
-        document.querySelector('.btn#prev').disabled = 'true'
-    } 
-
-    // Disable 'prev button' if on last page
-    if (global.search.page === global.search.totalPages) {
-        // document.querySelector('.btn#prev').style.display = 'none'
-        document.querySelector('.btn#next').disabled = 'true'
-    } 
-
-    // Next page
-    document.querySelector('.btn#next').addEventListener('click', async () => {
-        global.search.page++;
-        const { results, total_pages} = await searchAPIData ();
-        displaySearchResults(results);
-    })
-
-    // Previous page
-    document.querySelector('.btn#prev').addEventListener('click', async () => {
-        global.search.page--;
-        const { results, total_pages} = await searchAPIData ();
-        displaySearchResults(results);
-    })
-} 
-
-// --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 // >>>>> INIT
-// --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+// ----------------------------------------------------------------------------------------
 // Page Initialization 
 // ----------------------------------------------------------------------------------------
 function init () {
@@ -553,9 +488,9 @@ function initSwiper () {
 }
 
 
-// --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+// ----------------------------------------------------------------------------------------
 // >>>>> MAIN RUNNER
-// --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+// ----------------------------------------------------------------------------------------
 // Startup
 // ----------------------------------------------------------------------------------------
 document.addEventListener('DOMContentLoaded', init())
